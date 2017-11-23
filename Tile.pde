@@ -16,7 +16,7 @@ class Tile {
   private boolean isMine;
   private Point point; // Probably going to be the x,y coords in the graphics...
   private Tile[] neighbors;
-  private final int squareNum;
+  private int squareNum;
   private boolean isRevealed;
 
   public Tile() {
@@ -24,8 +24,8 @@ class Tile {
     isRevealed=false;
   }
 
-  public Tile(int num, int x, int y, boolean isMine) {
-    squareNum = num;
+  public Tile(int x, int y, boolean isMine) {
+    squareNum = -1;
     point = new Point(x, y);
     this.isMine = isMine;
     neighbors = new Tile[8];
@@ -94,9 +94,9 @@ class Tile {
     if (isMine != tile.isMine) {
       return false;
     }
-    if (squareNum != tile.squareNum) {
-      return false;
-    }
+    //if (squareNum != tile.squareNum) {
+    //  return false;
+    //}
     if (!point.equals(tile.point)) {
       return false;
     }
@@ -109,7 +109,21 @@ class Tile {
     int result = (isMine ? 1 : 0);
     result = 31 * result + point.hashCode();
     result = 31 * result + Arrays.hashCode(neighbors);
-    result = 31 * result + squareNum;
+    //result = 31 * result + squareNum;
     return result;
+  }
+
+  public void calculateSquareNum() {
+    if (isMine) {
+      squareNum = -1;
+    } else {
+      int sum = 0;
+      for (Tile t: neighbors) {
+        if (t.isMine()) {
+          sum++;
+        }
+      }
+      squareNum = sum;
+    }
   }
 }
