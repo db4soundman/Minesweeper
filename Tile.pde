@@ -1,7 +1,7 @@
-import java.awt.Point;
-import java.util.Arrays;
 
-class Tile {
+import java.util.*;
+
+public static class Tile {
   public static final int NO_NEIGHBOR = -1;
   public static final int NW_NEIGHBOR = 0;
   public static final int NORTH_NEIGHBOR = 1;
@@ -14,8 +14,8 @@ class Tile {
 
   private boolean isFlagged;
   private boolean isMine;
-  private Point point; // Probably going to be the x,y coords in the graphics...
-  private Tile[] neighbors;
+  private MyPoint point; // Probably going to be the x,y coords in the graphics...
+  private ArrayList<Tile> neighbors;
   private int squareNum;
   private boolean isRevealed;
 
@@ -26,17 +26,11 @@ class Tile {
 
   public Tile(int x, int y, boolean isMine) {
     squareNum = -1;
-    point = new Point(x, y);
+    point = new MyPoint(x, y);
     this.isMine = isMine;
-    neighbors = new Tile[8];
-    for (int i = 0; i < 8; i++) {
-      neighbors[i] = new Tile();
-    }
+    neighbors = new ArrayList<Tile>();
+    
     isRevealed = false;
-  }
-
-  public void setNeighbor(int pos, Tile neighbor) {
-    neighbors[pos] = neighbor;
   }
 
   public boolean isMine() {
@@ -54,19 +48,23 @@ class Tile {
   public int getSquareNum() {
     return squareNum;
   }
-  public Point getPoint() {
+  public MyPoint getPoint() {
     return point;
   }
 
-  public void setPoint(Point point) {
+  public void setPoint(MyPoint point) {
     this.point = point;
   }
 
-  public Tile[] getNeighbors() {
+  public ArrayList<Tile> getNeighbors() {
     return neighbors;
   }
+  
+  public void setNeighbor(int x, Tile tile) {
+    neighbors.add(tile);
+  }
 
-  public void setNeighbors(Tile[] neighbors) {
+  public void setNeighbors(ArrayList<Tile> neighbors) {
     this.neighbors = neighbors;
   }
 
@@ -101,14 +99,14 @@ class Tile {
       return false;
     }
     // Probably incorrect - comparing Object[] arrays with Arrays.equals
-    return Arrays.equals(neighbors, tile.neighbors);
+    return neighbors.equals(tile.neighbors);
   }
 
   @Override
     public int hashCode() {
     int result = (isMine ? 1 : 0);
     result = 31 * result + point.hashCode();
-    result = 31 * result + Arrays.hashCode(neighbors);
+//    result = 31 * result + neighbors.hashCode();
     //result = 31 * result + squareNum;
     return result;
   }
@@ -125,5 +123,8 @@ class Tile {
       }
       squareNum = sum;
     }
+  }
+  public int getCost() {
+    return 1;
   }
 }

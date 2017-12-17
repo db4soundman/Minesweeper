@@ -2,9 +2,12 @@
 // This program currently takes inputs for the number of rows, columns, and mines, and creates a board for minesweeper
 import java.util.HashSet;
 public static final int SQUARE_PIXELS = 34; //number of pixels in a square
-Tile[][] myBoard=createBoard(15, 10, 40, 9, 9);
+Tile[][] myBoard=createBoard(15, 10, 15, 9, 9);
 void setup() {
+  size(100,100);
+  surface.setResizable(true);
   drawBoard(myBoard);
+  //printBoard(myBoard);
 }
 
 void draw() {
@@ -24,7 +27,8 @@ Tile[][] clickTile(Tile[][] board) {
     board[i][j].toggleFlagged();
   } else if (mouseButton==LEFT) {
     if(!board[i][j].isFlagged()){
-      board[i][j].setRevealed(true);
+      myBoard = digLocation(myBoard, i, j);
+      //board[i][j].setRevealed(true);
     }
   }
   return board;
@@ -87,6 +91,11 @@ Tile[][] createBoard(int m, int n, int N, int clickX, int clickY) {
       } 
       catch(Exception e) {
       }
+      try {
+        board[i][j].setNeighbor(Tile.WEST_NEIGHBOR, board[i][j-1]);
+      } 
+      catch(Exception e) {
+      }
       board[i][j].calculateSquareNum();
     }
   }
@@ -100,7 +109,7 @@ void printBoard(Tile[][] board) {
   for (int i=0; i<m; i++) {
     print('\n');
     for (int j=0; j<n; j++) {
-      print(board[i][j].getSquareNum(), ' ');
+      print(board[i][j].getSquareNum() == -1 ? "M" : board[i][j].getSquareNum(), ' ');
     }
   }
 }
@@ -109,7 +118,7 @@ void printBoard(Tile[][] board) {
 void drawBoard(Tile[][] board) {
   int m=board.length;
   int n=board[0].length;
-  size(n*SQUARE_PIXELS, m*SQUARE_PIXELS);
+  surface.setSize(n*SQUARE_PIXELS, m*SQUARE_PIXELS);
   background(120, 120, 120);
   textSize(16);
   textAlign(CENTER, CENTER);
@@ -151,40 +160,24 @@ void drawBoard(Tile[][] board) {
 
 
 // Function to dig for a mine at the clicked location
-int[][] digLocation(int[][] board, int clickX, int clickY) {
-  // Checks if location is unflagged; CHANGE IF LOGIC
-  if (board[clickX][clickY]==0) {
+Tile[][] digLocation(Tile[][] board, int clickX, int clickY) {
+  // Checks if location is unflagged
+  if (!board[clickX][clickY].isFlagged()) {
     // Insert code to set boolean value of click state to be clicked
 
     // Checks location to see if mine was clicked
-    if (board[clickX][clickY]==-1) {
+    if (board[clickX][clickY].isMine()) {
       // Ends game if mine was clicked you looozer
       print("Game over you loser");
     } else {
-      // Recursively checks adjacent locations to see if click propogates
-      int i_sum;
-      int j_sum;
-      int m=board.length;
-      int n=board[0].length;
-      for (int i_add=-1; i_add<2; i_add++) {
-        for (int j_add=-1; j_add<2; j_add++) {
-          i_sum=clickX+i_add;
-          j_sum=clickY+j_add;
-          // Check if adjacent location exists and is not adjacent to any mines
-          if (i_sum>=0 && i_sum<m && j_sum>=0 && j_sum<n && board[i_sum][j_sum]==0) {
-            // Recursively checks new location
-            board=digLocation(board, i_sum, j_sum);
-          }
-        }
-      }
+      Search.performBFS(board, clickX, clickY);
     }
   }
   return board;
 }
 
 // Function to flag/deflag location
-int[][] flagLocation(int[][] board, int clickX, int clickY) {
+Tile[][] flagLocation(Tile[][] board, int clickX, int clickY) {
   // Insert code to flip boolean value of flag when class gets made
   return board;
 }
-
