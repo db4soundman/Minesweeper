@@ -22,6 +22,7 @@ public static class Tile {
   public Tile() {
     squareNum = Tile.NO_NEIGHBOR;
     isRevealed=false;
+    isFlagged=false;
   }
 
   public Tile(int x, int y, boolean isMine) {
@@ -29,7 +30,7 @@ public static class Tile {
     point = new MyPoint(x, y);
     this.isMine = isMine;
     neighbors = new ArrayList<Tile>();
-    
+    isFlagged=false;
     isRevealed = false;
   }
 

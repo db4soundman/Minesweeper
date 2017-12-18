@@ -2,47 +2,75 @@
 // This program currently takes inputs for the number of rows, columns, and mines, and creates a board for minesweeper
 import java.util.HashSet;
 public static final int SQUARE_PIXELS = 34; //number of pixels in a square
-Tile[][] myBoard=createBoard(15, 10, 15, 9, 9);
+public static final int MENU_HEIGHT = 34; //number of pixels in a square
+public static int time; //time in seconds
+public int time_initial=millis()/1000; //time in seconds
+public int N_mines=0; //number of mines
+public int N_flags=0; //number of flags
+public int game_status=0; //-1=lose, 0=in progress, 1=win
+Tile[][] myBoard;//=createBoard(15, 10, 15, 9, 9);
 void setup() {
-  size(100,100);
+  size(100, 100);
   surface.setResizable(true);
+  restartGame();
   drawBoard(myBoard);
-  //printBoard(myBoard);
 }
 
 void draw() {
-  //frame.setLocation(500,100); // sets the initial position of the screen
   drawBoard(myBoard);
+  time=millis()/1000-time_initial;
 }
 
 void mousePressed() {
   myBoard=clickTile(myBoard);
 }
 
+void restartGame() {
+  N_flags=0;
+  game_status=0;
+  myBoard=createBoard(15, 10, 15, 9, 9);
+  time_initial=millis()/1000;
+}
+
 Tile[][] clickTile(Tile[][] board) {
   int i, j;
   i=mouseY / SQUARE_PIXELS;
   j=mouseX / SQUARE_PIXELS;
-  if (mouseButton==RIGHT) {
-    board[i][j].toggleFlagged();
-  } else if (mouseButton==LEFT) {
-    if(!board[i][j].isFlagged()){
-      myBoard = digLocation(myBoard, i, j);
-      //board[i][j].setRevealed(true);
+  if (i<0 || i>N_mines-1 || j<0 || j>N_mines-1 ) {
+    restartGame();
+  } else {
+    if (mouseButton==RIGHT) {
+      if (board[i][j].isFlagged() && N_flags>0) {
+        board[i][j].toggleFlagged();
+        N_flags=N_flags-1;
+      } else {
+        if (N_flags<N_mines) {
+          board[i][j].toggleFlagged();
+          N_flags=N_flags+1;
+        }
+      }
+    } else if (mouseButton==LEFT) {
+      if (!board[i][j].isFlagged()) {
+        myBoard = digLocation(myBoard, i, j);
+        //board[i][j].setRevealed(true);
+      }
     }
   }
+
+
   return board;
 }
 
 // Creates the minesweeper board
 Tile[][] createBoard(int m, int n, int N, int clickX, int clickY) {
   Tile[][] board=new Tile[m][n];
-
   // Checks to make sure there aren't more mines than board locations
   if (N>m*n) {
     // Sets number mines to be 1 less than number of locations
     N=m*n-1;
   }
+  N_mines=N;
+  N_flags=0;
   HashSet<Integer> mineLocations = new HashSet();
   while (mineLocations.size () < N) {
     mineLocations.add(int(random(m*n)));
@@ -118,7 +146,7 @@ void printBoard(Tile[][] board) {
 void drawBoard(Tile[][] board) {
   int m=board.length;
   int n=board[0].length;
-  surface.setSize(n*SQUARE_PIXELS, m*SQUARE_PIXELS);
+  surface.setSize(n*SQUARE_PIXELS, m*SQUARE_PIXELS+MENU_HEIGHT);
   background(120, 120, 120);
   textSize(16);
   textAlign(CENTER, CENTER);
@@ -148,13 +176,29 @@ void drawBoard(Tile[][] board) {
   }
 
   // print horizontal lines
-  for (int i=0; i<m; i++) {
+  for (int i=0; i<m+1; i++) {
     strokeWeight(2);
     line(0, i*SQUARE_PIXELS, width, i*SQUARE_PIXELS);
   }
   // print vertical lines
   for (int j=0; j<n; j++) {
-    line(j*SQUARE_PIXELS, 0, j*SQUARE_PIXELS, height);
+    line(j*SQUARE_PIXELS, 0, j*SQUARE_PIXELS, height-MENU_HEIGHT);
+  }
+  fill(255, 255, 255);
+  rect(width/2, height-MENU_HEIGHT/2, width, MENU_HEIGHT);
+  fill(0, 0, 0);
+  String sL="Time: "+str(time);
+  text(sL, width/4, height-MENU_HEIGHT/2);
+  String sR="Mines: "+str(N_mines-N_flags);
+  text(sR, width*3/4, height-MENU_HEIGHT/2);
+
+  fill(255, 0, 255);
+  if (game_status==-1) {
+    text("Game over you loser.", width/2, height/2);
+    restartGame();
+  } else if (game_status==1) {
+    text("Dat boi wins!!!!!", width/2, height/2);
+    restartGame();
   }
 }
 
@@ -168,7 +212,7 @@ Tile[][] digLocation(Tile[][] board, int clickX, int clickY) {
     // Checks location to see if mine was clicked
     if (board[clickX][clickY].isMine()) {
       // Ends game if mine was clicked you looozer
-      print("Game over you loser");
+      game_status=-1;
     } else {
       Search.performBFS(board, clickX, clickY);
     }
