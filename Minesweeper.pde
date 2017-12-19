@@ -13,7 +13,6 @@ void setup() {
   size(100, 100);
   surface.setResizable(true);
   restartGame();
-  drawBoard(myBoard);
 }
 
 void draw() {
