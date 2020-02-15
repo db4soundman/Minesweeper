@@ -2,7 +2,7 @@ import java.awt.Point;
 import java.util.TreeSet;
 
 /**
- * A class that represents a node being searched via one of the serach algorithms.
+ * A class that represents a node being searched via one of the search algorithms.
  */
 
 /**

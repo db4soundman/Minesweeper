@@ -1,4 +1,8 @@
-// TODO Return the no first click loss functionality!!
+// TODO: //<>// //<>//
+// No loss on first click
+// High score list as text file?
+// Add difficulty modes
+//
 // This program currently takes inputs for the number of rows, columns, and mines, and creates a board for minesweeper
 import java.util.HashSet;
 public static final int SQUARE_PIXELS = 34; //number of pixels in a square
@@ -17,52 +21,69 @@ void setup() {
 
 void draw() {
   drawBoard(myBoard);
-  time=millis()/1000-time_initial;
+  if (game_status==0) {
+    time=millis()/1000-time_initial;
+  }
 }
 
 void mousePressed() {
-  myBoard=clickTile(myBoard);
+  int m, n, i, j;
+  m=myBoard.length;
+  n=myBoard[0].length;
+  i=mouseY / SQUARE_PIXELS;
+  j=mouseX / SQUARE_PIXELS;
+  if (i>=0 && i<m && j>=0 && j<n) {
+    if (game_status==0) {
+      myBoard=clickTile(myBoard, i, j);
+    }
+  } else {
+    if (mouseX>=width/2-0.5*SQUARE_PIXELS && mouseX<=width/2+0.5*SQUARE_PIXELS) {
+      restartGame();
+    }
+  }
 }
 
 void restartGame() {
   N_flags=0;
   game_status=0;
-  myBoard=createBoard(15, 10, 15, 9, 9);
+  myBoard=createBoard(8, 8, 10);
   time_initial=millis()/1000;
 }
 
-Tile[][] clickTile(Tile[][] board) {
-  int i, j;
-  i=mouseY / SQUARE_PIXELS;
-  j=mouseX / SQUARE_PIXELS;
-  if (i<0 || i>N_mines-1 || j<0 || j>N_mines-1 ) {
-    restartGame();
-  } else {
-    if (mouseButton==RIGHT) {
-      if (board[i][j].isFlagged() && N_flags>0) {
+Tile[][] clickTile(Tile[][] board, int i, int j) {
+
+  if (mouseButton==RIGHT) {
+    // Remove flag
+    if (board[i][j].isFlagged() && N_flags>0) {
+      board[i][j].toggleFlagged();
+      N_flags=N_flags-1;
+    } else {
+      // Place flag
+      if (N_flags<N_mines && !board[i][j].isRevealed()) {
         board[i][j].toggleFlagged();
-        N_flags=N_flags-1;
-      } else {
-        if (N_flags<N_mines) {
-          board[i][j].toggleFlagged();
-          N_flags=N_flags+1;
-        }
-      }
-    } else if (mouseButton==LEFT) {
-      if (!board[i][j].isFlagged()) {
-        myBoard = digLocation(myBoard, i, j);
-        //board[i][j].setRevealed(true);
+        N_flags=N_flags+1;
       }
     }
+  } else if (mouseButton==LEFT) {
+    // Dig tile for mine
+    if (!board[i][j].isFlagged()) {
+      myBoard = digLocation(myBoard, i, j);
+      //board[i][j].setRevealed(true);
+    }
   }
-
-
   return board;
 }
 
 // Creates the minesweeper board
-Tile[][] createBoard(int m, int n, int N, int clickX, int clickY) {
+Tile[][] createBoard(int m, int n, int N) {
+  if (n<5) {
+    n=5;
+  }
+  if (m<2) {
+    m=2;
+  }
   Tile[][] board=new Tile[m][n];
+
   // Checks to make sure there aren't more mines than board locations
   if (N>m*n) {
     // Sets number mines to be 1 less than number of locations
@@ -146,61 +167,156 @@ void drawBoard(Tile[][] board) {
   int m=board.length;
   int n=board[0].length;
   surface.setSize(n*SQUARE_PIXELS, m*SQUARE_PIXELS+MENU_HEIGHT);
-  background(120, 120, 120);
+  background(160, 160, 160);
   textSize(16);
   textAlign(CENTER, CENTER);
   rectMode(CENTER);
+  stroke(0, 0, 0);
 
+  // Draw Menu
+  fill(255, 255, 255);
+  rect(width/2, height-MENU_HEIGHT/2, width, MENU_HEIGHT);
+  fill(255, 255, 255);
+  rect(width/2, height-MENU_HEIGHT/2, SQUARE_PIXELS, SQUARE_PIXELS);
+  // Draw Face
+  fill(255, 255, 0);
+  ellipse(width/2, height-MENU_HEIGHT/2, 0.75*SQUARE_PIXELS, 0.75*SQUARE_PIXELS);
+
+  // Ongoing Game
   for (int i=0; i<m; i++) {
     for (int j=0; j<n; j++) {
+
+
       if (board[i][j].isRevealed()) { // draw clicked tile background
         fill(200, 200, 200);
         rect(j*SQUARE_PIXELS+SQUARE_PIXELS/2, i*SQUARE_PIXELS+SQUARE_PIXELS/2, SQUARE_PIXELS, SQUARE_PIXELS);
+        if (board[i][j].getSquareNum()!=0) { // prints square number text
 
-        if (board[i][j].isMine()) { // draws mines
-          fill(150, 150, 150);
-          strokeWeight(1);
-          ellipse(j*SQUARE_PIXELS+SQUARE_PIXELS/2, i*SQUARE_PIXELS+SQUARE_PIXELS/2, SQUARE_PIXELS*7/10, SQUARE_PIXELS*7/10);
-        } else if (board[i][j].getSquareNum()!=0) { // prints square number text
-          fill(0, 0, 0);
+          // Color numbers
+          switch (board[i][j].getSquareNum()) {
+          case 1:
+            fill(0, 0, 255);
+            break;
+          case 2:
+            fill(0, 150, 0);
+            break;
+          case 3:
+            fill(255, 0, 0);
+            break;
+          case 4:
+            fill(0, 0, 100);
+            break;
+          case 5:
+            fill(100, 0, 0);
+            break;
+          case 6:
+            fill(0, 255, 255);
+            break;
+          case 7:
+            fill(0, 0, 0);
+            break;
+          case 8:
+            fill(120, 120, 120);
+            break;
+          }
+
           text(board[i][j].getSquareNum(), j*SQUARE_PIXELS+SQUARE_PIXELS/2, i*SQUARE_PIXELS+SQUARE_PIXELS/2);
         }
       } else if (board[i][j].isFlagged()) { // draws flags
         fill(255, 0, 0);
         strokeWeight(1);
+        stroke(0, 0, 0);
         rect(j*SQUARE_PIXELS+SQUARE_PIXELS/2, i*SQUARE_PIXELS+SQUARE_PIXELS*4/10, SQUARE_PIXELS*7/10, SQUARE_PIXELS*4/10);
         line(j*SQUARE_PIXELS+SQUARE_PIXELS*3/20, i*SQUARE_PIXELS+SQUARE_PIXELS/2, j*SQUARE_PIXELS+SQUARE_PIXELS*3/20, i*SQUARE_PIXELS+SQUARE_PIXELS*5/6);
+      }
+
+      if (game_status!=0) { // draws mines at end
+        if (board[i][j].isMine()) {
+          fill(100, 100, 100);
+          stroke(0, 0, 0);
+          line(j*SQUARE_PIXELS+0.5*SQUARE_PIXELS, i*SQUARE_PIXELS+0.1*SQUARE_PIXELS, j*SQUARE_PIXELS+0.5*SQUARE_PIXELS, i*SQUARE_PIXELS+0.9*SQUARE_PIXELS);
+          line(j*SQUARE_PIXELS+0.1*SQUARE_PIXELS, i*SQUARE_PIXELS+0.5*SQUARE_PIXELS, j*SQUARE_PIXELS+0.9*SQUARE_PIXELS, i*SQUARE_PIXELS+0.5*SQUARE_PIXELS);
+          line(j*SQUARE_PIXELS+0.22*SQUARE_PIXELS, i*SQUARE_PIXELS+0.22*SQUARE_PIXELS, j*SQUARE_PIXELS+0.78*SQUARE_PIXELS, i*SQUARE_PIXELS+0.78*SQUARE_PIXELS);
+          line(j*SQUARE_PIXELS+0.22*SQUARE_PIXELS, i*SQUARE_PIXELS+0.78*SQUARE_PIXELS, j*SQUARE_PIXELS+0.78*SQUARE_PIXELS, i*SQUARE_PIXELS+0.22*SQUARE_PIXELS);
+          strokeWeight(1);
+          ellipse(j*SQUARE_PIXELS+SQUARE_PIXELS/2, i*SQUARE_PIXELS+SQUARE_PIXELS/2, 0.6*SQUARE_PIXELS, 0.6*SQUARE_PIXELS);
+        }
+        if (board[i][j].isFlagged()) { // draw flags at end
+          if (board[i][j].isMine()) {
+            fill(255, 0, 0);
+            strokeWeight(1);
+            stroke(0, 0, 0);
+            rect(j*SQUARE_PIXELS+SQUARE_PIXELS/2, i*SQUARE_PIXELS+SQUARE_PIXELS*4/10, SQUARE_PIXELS*7/10, SQUARE_PIXELS*4/10);
+            line(j*SQUARE_PIXELS+SQUARE_PIXELS*3/20, i*SQUARE_PIXELS+SQUARE_PIXELS/2, j*SQUARE_PIXELS+SQUARE_PIXELS*3/20, i*SQUARE_PIXELS+SQUARE_PIXELS*5/6);
+          } else {
+            stroke(255, 0, 0);
+            line(j*SQUARE_PIXELS+0*SQUARE_PIXELS, i*SQUARE_PIXELS+0*SQUARE_PIXELS, j*SQUARE_PIXELS+1*SQUARE_PIXELS, i*SQUARE_PIXELS+1*SQUARE_PIXELS);
+            line(j*SQUARE_PIXELS+0*SQUARE_PIXELS, i*SQUARE_PIXELS+1*SQUARE_PIXELS, j*SQUARE_PIXELS+1*SQUARE_PIXELS, i*SQUARE_PIXELS+0*SQUARE_PIXELS);
+          }
+        }
+      } else {
+        // Draw Facial Features
+        fill(0, 0, 0);
+        strokeWeight(1);
+        ellipse(width/2+0.1*SQUARE_PIXELS, height-MENU_HEIGHT/2-0.1*SQUARE_PIXELS, 0.05*SQUARE_PIXELS, 0.05*SQUARE_PIXELS);
+        ellipse(width/2-0.1*SQUARE_PIXELS, height-MENU_HEIGHT/2-0.1*SQUARE_PIXELS, 0.05*SQUARE_PIXELS, 0.05*SQUARE_PIXELS);
+        noFill();
+        arc(width/2, height-MENU_HEIGHT/2-0.05*SQUARE_PIXELS, 0.5*SQUARE_PIXELS, 0.5*SQUARE_PIXELS, 0.65, PI-0.65);
       }
     }
   }
 
+
   // print horizontal lines
   for (int i=0; i<m+1; i++) {
     strokeWeight(2);
+    stroke(0, 0, 0);
     line(0, i*SQUARE_PIXELS, width, i*SQUARE_PIXELS);
   }
   // print vertical lines
   for (int j=0; j<n; j++) {
     line(j*SQUARE_PIXELS, 0, j*SQUARE_PIXELS, height-MENU_HEIGHT);
   }
-  fill(255, 255, 255);
-  rect(width/2, height-MENU_HEIGHT/2, width, MENU_HEIGHT);
+
   fill(0, 0, 0);
-  String sL="Time: "+str(time);
-  text(sL, width/4, height-MENU_HEIGHT/2);
-  String sR="Mines: "+str(N_mines-N_flags);
-  text(sR, width*3/4, height-MENU_HEIGHT/2);
 
-  fill(255, 0, 255);
+  // Time
+  String sL="T: " + str(time);
+  text(sL, SQUARE_PIXELS, height-MENU_HEIGHT/2);
+
+  // Mines Flagged
+  String sR="M: " + str(N_mines-N_flags);
+  text(sR, width-SQUARE_PIXELS, height-MENU_HEIGHT/2);
+
+
+  //} else {
+
+
+  // Lost Game
   if (game_status==-1) {
-    text("Game over you loser.", width/2, height/2);
-    restartGame();
-  } else if (game_status==1) {
-    text("Dat boi wins!!!!!", width/2, height/2);
-    restartGame();
-  }
-}
 
+    // Draw Facial Features
+    fill(0, 0, 0);
+    strokeWeight(1);
+    ellipse(width/2+0.1*SQUARE_PIXELS, height-MENU_HEIGHT/2-0.1*SQUARE_PIXELS, 0.05*SQUARE_PIXELS, 0.05*SQUARE_PIXELS);
+    ellipse(width/2-0.1*SQUARE_PIXELS, height-MENU_HEIGHT/2-0.1*SQUARE_PIXELS, 0.05*SQUARE_PIXELS, 0.05*SQUARE_PIXELS);
+    noFill();
+    arc(width/2, height-0.2*SQUARE_PIXELS, 0.5*SQUARE_PIXELS, 0.5*SQUARE_PIXELS, 0.65+PI, PI-0.65+PI);
+
+    // Won Game
+  } else if (game_status==1) {
+
+    // Draw Facial Features
+    fill(0, 0, 0);
+    strokeWeight(1);
+    ellipse(width/2+0.15*SQUARE_PIXELS, height-MENU_HEIGHT/2-0.1*SQUARE_PIXELS, 0.2*SQUARE_PIXELS, 0.2*SQUARE_PIXELS);
+    ellipse(width/2-0.15*SQUARE_PIXELS, height-MENU_HEIGHT/2-0.1*SQUARE_PIXELS, 0.2*SQUARE_PIXELS, 0.2*SQUARE_PIXELS);
+    line(width/2+0.3*SQUARE_PIXELS, height-0.7*MENU_HEIGHT, width/2-0.3*SQUARE_PIXELS, height-0.7*MENU_HEIGHT);
+    noFill();
+    arc(width/2, height-MENU_HEIGHT/2-0.05*SQUARE_PIXELS, 0.5*SQUARE_PIXELS, 0.5*SQUARE_PIXELS, 0.65, PI-0.65);
+  }
+  //}
+}
 
 // Function to dig for a mine at the clicked location
 Tile[][] digLocation(Tile[][] board, int clickX, int clickY) {
@@ -213,7 +329,24 @@ Tile[][] digLocation(Tile[][] board, int clickX, int clickY) {
       // Ends game if mine was clicked you looozer
       game_status=-1;
     } else {
+
       Search.performBFS(board, clickX, clickY);
+
+      // Check if all mines are cleared
+      int m=board.length;
+      int n=board[0].length;
+      int totalRevealed = 0;
+      for (int i=0; i<m; i++) {
+        for (int j=0; j<n; j++) {
+          if (board[i][j].isRevealed()) {
+            totalRevealed++;
+          }
+        }
+      }
+      // Ends game is user wins
+      if (m*n==totalRevealed+N_mines) {
+        game_status=1;
+      }
     }
   }
   return board;
